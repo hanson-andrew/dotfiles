@@ -1,1 +1,1 @@
-ln -sf ./home/ahanson/.zshrc $HOME/.zshrc
+ln -sf .zshrc $HOME/.zshrc

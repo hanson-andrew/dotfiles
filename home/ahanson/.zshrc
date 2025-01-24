@@ -120,7 +120,7 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 unsetopt BEEP
-alias dotfiles='git --git-dir=/home/ahanson/.dotfiles --work-tree=/'
+alias dotfiles='git --git-dir=$HOME/.dotfiles --work-tree=/'
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/home/ahanson/downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/home/ahanson/downloads/google-cloud-sdk/path.zsh.inc'; fi

@@ -80,9 +80,9 @@ export HTTP_TOOLKIT_SPKI=xJUdgdH7vIoUrEvS0MMd6ofG+NsUosI5BoBIz85uUxU=
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git ssh-agent)
+plugins=(git)
 
-zstyle :omz:plugins:ssh-agent lazy yes
+zstyle :omz:plugins lazy yes
 
 source $ZSH/oh-my-zsh.sh
 
@@ -121,3 +121,9 @@ export NVM_DIR="$HOME/.nvm"
 
 unsetopt BEEP
 alias dotfiles='git --git-dir=/home/ahanson/.dotfiles --work-tree=/'
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/home/ahanson/downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/home/ahanson/downloads/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/home/ahanson/downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/home/ahanson/downloads/google-cloud-sdk/completion.zsh.inc'; fi

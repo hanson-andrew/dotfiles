@@ -1,4 +1,4 @@
-dotfiles_dir=~/dotfiles
+dotfiles_dir=~/.dotfiles
 
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k
 

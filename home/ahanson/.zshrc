@@ -80,7 +80,7 @@ export HTTP_TOOLKIT_SPKI=xJUdgdH7vIoUrEvS0MMd6ofG+NsUosI5BoBIz85uUxU=
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git)
+plugins=(git azure)
 
 zstyle :omz:plugins lazy yes
 

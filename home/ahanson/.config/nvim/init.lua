@@ -1,3 +1,5 @@
+require("config.lazy")
+
 vim.o.runtimepath = vim.o.runtimepath .. ",~/.vim,~/vim/after"
 vim.o.packpath = vim.o.runtimepath
 

@@ -10,6 +10,8 @@ fi
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
+export EDITOR=nvim
+
 plugins=(git azure)
 
 zstyle :omz:plugins lazy yes

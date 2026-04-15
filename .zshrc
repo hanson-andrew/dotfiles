@@ -101,3 +101,44 @@ elif type compctl &>/dev/null; then
   compctl -K _npm_completion npm
 fi
 ###-end-npm-completion-###
+
+
+### devcontainer functions ###
+dcup() {
+  devcontainer up --workspace-folder .
+}
+
+dcdot() {
+  : "${DOTFILES_REPO_URL:?DOTFILES_REPO_URL is not set}"
+
+  devcontainer exec --workspace-folder . bash -lc '
+    set -e
+
+    stamp="$HOME/.dotfiles-bootstrap-done"
+
+    if [ ! -d "$HOME/.cfg" ]; then
+      git clone --bare "'"$DOTFILES_REPO_URL"'" "$HOME/.cfg"
+    fi
+
+    if [ ! -f "$stamp" ]; then
+      rm -f "$HOME/.zshrc" "$HOME/.p10k.zsh" "$HOME/.vimrc"
+
+      git --git-dir="$HOME/.cfg" --work-tree="$HOME" checkout -f
+      git --git-dir="$HOME/.cfg" --work-tree="$HOME" config --local status.showUntrackedFiles no
+
+      if [ ! -d "$HOME/powerlevel10k" ]; then
+        git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$HOME/powerlevel10k"
+      fi
+
+      touch "$stamp"
+    fi
+  '
+}
+
+dcshell() {
+  devcontainer exec \
+    --workspace-folder . \
+    --remote-env TERM=xterm-256color \
+    zsh -l
+}
+

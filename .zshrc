@@ -30,7 +30,7 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 unsetopt BEEP
-alias dotfiles='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
+alias dotfiles='git --git-dir=$HOME/.dotfiles --work-tree=$HOME -c status.showUntrackedFiles=no'
 
 ###-begin-npm-completion-###
 #

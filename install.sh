@@ -9,11 +9,6 @@ if [ ! -d "${DOTFILES_BARE_DIR}" ]; then
   git clone --bare "${DOTFILES_REMOTE_URL}" "${DOTFILES_BARE_DIR}"
 fi
 
-# First-create behavior: let dotfiles win for the files you own.
-if [ ! -f "${STAMP}" ]; then
-  rm -f "${HOME}/.zshrc" "${HOME}/.p10k.zsh" "${HOME}/.vimrc"
-fi
-
 git --git-dir="${DOTFILES_BARE_DIR}" --work-tree="${HOME}" checkout -f
 git --git-dir="${DOTFILES_BARE_DIR}" --work-tree="${HOME}" config --local status.showUntrackedFiles no
 

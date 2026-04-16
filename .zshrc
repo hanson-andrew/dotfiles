@@ -107,7 +107,6 @@ fi
 
 _dc_devcontainer_name() {
   devcontainer read-configuration --workspace-folder . 2>/dev/null \
-    | tail -n +2 \
     | jq -r '.configuration.name // empty'
 }
 
@@ -147,6 +146,7 @@ dcshell() {
   [[ -z "$dc_name" ]] && dc_name="devcontainer"
 
 
+  clear
   devcontainer exec \
     --workspace-folder . \
     --remote-env TERM=xterm-256color \

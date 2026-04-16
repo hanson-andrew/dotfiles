@@ -103,7 +103,14 @@ fi
 ###-end-npm-completion-###
 
 
-### devcontainer functions ###
+### start devcontainer-cli-support ###
+
+_dc_devcontainer_name() {
+  devcontainer read-configuration --workspace-folder . 2>/dev/null \
+    | tail -n +2 \
+    | jq -r '.configuration.name // empty'
+}
+
 dcup() {
   devcontainer up --workspace-folder .
 }
@@ -116,15 +123,14 @@ dcdot() {
 
     stamp="$HOME/.dotfiles-bootstrap-done"
 
-    if [ ! -d "$HOME/.cfg" ]; then
-      git clone --bare "'"$DOTFILES_REPO_URL"'" "$HOME/.cfg"
+    if [ ! -d "$HOME/.dotfiles" ]; then
+      git clone --bare "'"$DOTFILES_REPO_URL"'" "$HOME/.dotfiles"
     fi
 
     if [ ! -f "$stamp" ]; then
       rm -f "$HOME/.zshrc" "$HOME/.p10k.zsh" "$HOME/.vimrc"
 
-      git --git-dir="$HOME/.cfg" --work-tree="$HOME" checkout -f
-      git --git-dir="$HOME/.cfg" --work-tree="$HOME" config --local status.showUntrackedFiles no
+      git --git-dir="$HOME/.dotfiles" --work-tree="$HOME" checkout -f
 
       if [ ! -d "$HOME/powerlevel10k" ]; then
         git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$HOME/powerlevel10k"
@@ -136,9 +142,25 @@ dcdot() {
 }
 
 dcshell() {
+  local dc_name
+  dc_name="$(_dc_devcontainer_name)"
+  [[ -z "$dc_name" ]] && dc_name="devcontainer"
+
+
   devcontainer exec \
     --workspace-folder . \
     --remote-env TERM=xterm-256color \
+    --remote-env DEVCONTAINER_TAB_TITLE="$dc_name" \
     zsh -l
 }
+
+if [[ -n "$DEVCONTAINER_TAB_TITLE" ]]; then
+  function _dc_set_title() {
+    print -Pn "\e]0;${DEVCONTAINER_TAB_TITLE}\a"
+  }
+  precmd_functions+=(_dc_set_title)
+  _dc_set_title
+fi
+
+## end devcontainer-cli-support ##
 

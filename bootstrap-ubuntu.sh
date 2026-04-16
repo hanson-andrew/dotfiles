@@ -3,6 +3,7 @@
 
 PACKAGES=(
   neovim
+  jq
 )
 
 sudo apt update

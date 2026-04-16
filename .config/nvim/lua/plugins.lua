@@ -8,5 +8,9 @@ return {
       -- load the colorscheme here
       vim.cmd([[colorscheme tokyonight]])
     end,
+  },
+  {
+	  "numToStr/Comment.nvim",
+	  opts = {},
   }
 }

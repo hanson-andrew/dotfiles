@@ -13,6 +13,11 @@ export ZSH="$HOME/.oh-my-zsh"
 export EDITOR=nvim
 export DOTFILES_REPO_URL=https://github.com/hanson-andrew/dotfiles.git
 export PATH="$HOME/.devcontainers/bin:$PATH"
+export PATH="$PATH:/opt/nvim/"
+
+if [ -f "$HOME/.zshrc.local" ]; then
+  source "$HOME/.zshrc.local"
+fi
 
 plugins=(git azure)
 

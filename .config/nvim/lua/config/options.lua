@@ -15,3 +15,8 @@ opt.history = 1000
 
 opt.wildmenu = true
 opt.wildmode = "list:longest"
+
+opt.tabstop = 2
+opt.shiftwidth = 2
+opt.softtabstop = 2
+opt.expandtab = true

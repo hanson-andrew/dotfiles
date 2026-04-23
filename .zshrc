@@ -15,6 +15,7 @@ export DOTFILES_REPO_URL=https://github.com/hanson-andrew/dotfiles.git
 export PATH="$HOME/.devcontainers/bin:$PATH"
 export PATH="$PATH:/opt/nvim/"
 
+
 if [ -f "$HOME/.zshrc.local" ]; then
   source "$HOME/.zshrc.local"
 fi
@@ -115,6 +116,108 @@ _dc_devcontainer_name() {
     | jq -r '.configuration.name // empty'
 }
 
+# ----------------------------
+# git-credential-forwarder
+# ----------------------------
+
+: "${DC_GCF_PORT:=64173}"
+: "${DC_GCF_STATE_DIR:=${XDG_STATE_HOME:-$HOME/.local/state}/git-credential-forwarder}"
+
+_dc_gcf_server_addr() {
+  printf 'host.docker.internal:%s\n' "$DC_GCF_PORT"
+}
+
+_dc_ensure_gcf_host() {
+  mkdir -p "$DC_GCF_STATE_DIR"
+
+  if ! command -v npm >/dev/null 2>&1; then
+    echo "npm is required on the host to install git-credential-forwarder" >&2
+    return 1
+  fi
+
+  if ! command -v gcf-server >/dev/null 2>&1 || ! command -v gcf-client >/dev/null 2>&1; then
+    echo "Installing git-credential-forwarder on host..."
+    npm install -g git-credential-forwarder || return 1
+  fi
+
+  if command -v lsof >/dev/null 2>&1 && lsof -nP -iTCP:"$DC_GCF_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+    return 0
+  fi
+
+  echo "Starting gcf-server on host port $DC_GCF_PORT..."
+  nohup env GIT_CREDENTIAL_FORWARDER_PORT="$DC_GCF_PORT" \
+    gcf-server \
+    >"$DC_GCF_STATE_DIR/server.log" 2>&1 < /dev/null &
+  echo $! > "$DC_GCF_STATE_DIR/server.pid"
+
+  sleep 1
+
+  if command -v lsof >/dev/null 2>&1 && ! lsof -nP -iTCP:"$DC_GCF_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "gcf-server did not start successfully; see $DC_GCF_STATE_DIR/server.log" >&2
+    return 1
+  fi
+}
+
+_dc_bootstrap_gcf_container() {
+  local host_gitconfig="$HOME/.gitconfig"
+  local server_addr
+  server_addr="$(_dc_gcf_server_addr)"
+
+  if [[ ! -f "$host_gitconfig" ]]; then
+    echo "Host ~/.gitconfig not found; skipping container gitconfig sync" >&2
+    return 0
+  fi
+
+  # Copy host gitconfig into a separate include file inside the container.
+  # This avoids clobbering container-specific settings.
+  devcontainer exec --workspace-folder . bash -lc 'mkdir -p "$HOME"' || return 1
+  devcontainer exec --workspace-folder . sh -lc 'cat > "$HOME/.gitconfig.host"' < "$host_gitconfig" || return 1
+
+  # Install client in container if needed, then wire config.
+  devcontainer exec \
+    --workspace-folder . \
+    --remote-env GIT_CREDENTIAL_FORWARDER_SERVER="$server_addr" \
+
+    bash -lc '
+  set -euo pipefail
+
+  stamp="$HOME/.gcf-client-installed-v1"
+
+  if ! command -v gcf-client >/dev/null 2>&1; then
+    if ! command -v npm >/dev/null 2>&1; then
+      echo "npm is required inside the container to install git-credential-forwarder" >&2
+      exit 1
+    fi
+
+    npm install -g git-credential-forwarder
+    touch "$stamp"
+  fi
+
+  git config --file "$HOME/.gitconfig.host" --unset-all credential.helper || true
+
+  if ! git config --global --get-all include.path | grep -Fx "$HOME/.gitconfig.host" >/dev/null 2>&1; then
+    git config --global --add include.path "$HOME/.gitconfig.host"
+  fi
+
+  git config --global --unset-all credential.helper || true
+  git config --global credential.helper "!f(){ gcf-client \"\$@\"; }; f"
+'
+
+}
+
+dcexec() {
+  local server_addr
+  server_addr="$(_dc_gcf_server_addr)"
+
+  _dc_ensure_gcf_host || return 1
+  _dc_bootstrap_gcf_container || return 1
+
+  devcontainer exec \
+    --workspace-folder . \
+    --remote-env GIT_CREDENTIAL_FORWARDER_SERVER="$server_addr" \
+    "$@"
+}
+
 dcup() {
   devcontainer up --workspace-folder .
 }
@@ -147,15 +250,22 @@ dcdot() {
 
 dcshell() {
   local dc_name
+  local server_addr
+
   dc_name="$(_dc_devcontainer_name)"
   [[ -z "$dc_name" ]] && dc_name="devcontainer"
 
+  server_addr=$(_dc_gcf_server_addr)
+
+  _dc_ensure_gcf_host || return 1
+  _dc_bootstrap_gcf_container || return 1
 
   clear
   devcontainer exec \
     --workspace-folder . \
     --remote-env TERM=xterm-256color \
     --remote-env DEVCONTAINER_TAB_TITLE="$dc_name" \
+    --remote-env GIT_CREDENTIAL_FORWARDER_SERVER="$server_addr" \
     zsh -l
 }
 
@@ -168,4 +278,26 @@ if [[ -n "$DEVCONTAINER_TAB_TITLE" ]]; then
 fi
 
 ## end devcontainer-cli-support ##
+
+
+merge_claude_settings() {
+  local base="$HOME/.claude/settings.json"
+  local override="$HOME/.claude-settings.json"
+
+  # Only run if override exists
+  if [[ -f "$override" ]]; then
+    # Ensure base exists (create empty JSON if not)
+    if [[ ! -f "$base" ]]; then
+      mkdir -p "$(dirname "$base")"
+      echo '{}' > "$base"
+    fi
+
+    # Merge: override wins at top level
+    tmp="$(mktemp)"
+    jq -s '.[0] + .[1]' "$base" "$override" > "$tmp" && mv "$tmp" "$base"
+  fi
+}
+
+# Run it (optional: comment out if you only want it manually)
+merge_claude_settings
 

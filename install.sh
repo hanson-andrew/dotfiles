@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DOTFILES_BARE_DIR="${HOME}/.cfg"
+DOTFILES_BARE_DIR="${HOME}/.dotfiles"
 DOTFILES_REMOTE_URL="${DOTFILES_REMOTE_URL:-https://github.com/hanson-andrew/dotfiles.git}"
 STAMP="${HOME}/.dotfiles-bootstrap-done"
 

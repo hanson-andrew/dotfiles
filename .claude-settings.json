@@ -1,6 +1,7 @@
 {
   "spinnerVerbs": {
-    "replace": [
+    "mode": "replace",
+    "verbs": [
       "sparkling",
       "daydreaming",
       "storytelling",
@@ -54,5 +55,10 @@
       "holding-the-pen",
       "changing-the-ending"
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y ccstatusline@latest",
+    "padding": 0
   }
 }

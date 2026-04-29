@@ -14,6 +14,8 @@ export EDITOR=nvim
 export DOTFILES_REPO_URL=https://github.com/hanson-andrew/dotfiles.git
 export PATH="$HOME/.devcontainers/bin:$PATH"
 export PATH="$PATH:/opt/nvim/"
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
 
 
 if [ -f "$HOME/.zshrc.local" ]; then

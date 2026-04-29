@@ -108,6 +108,9 @@ elif type compctl &>/dev/null; then
 fi
 ###-end-npm-completion-###
 
+# Ensure ~/.tmux.local.conf exists
+[ -f "$HOME/.tmux.local.conf" ] || touch "$HOME/.tmux.local.conf"
+
 
 ### start devcontainer-cli-support ###
 
@@ -116,44 +119,53 @@ _dc_devcontainer_name() {
     | jq -r '.configuration.name // empty'
 }
 
+
 # ----------------------------
-# git-credential-forwarder
+# git-credential-domain-socket-forwarder
 # ----------------------------
 
-: "${DC_GCF_PORT:=64173}"
-: "${DC_GCF_STATE_DIR:=${XDG_STATE_HOME:-$HOME/.local/state}/git-credential-forwarder}"
+DC_GCF_HOST_EXE="/home/ahanson/src/repos/GitCredentialDomainSocketForwarder/Console/bin/Release/net10.0/linux-x64/native/Console"
+DC_GCF_CONTAINER_EXE="/usr/local/bin/git-credential-domain-socket-forwarder"
+DC_GCF_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/git-credential-domain-socket-forwarder"
+DC_GCF_SOCKET="$DC_GCF_STATE_DIR/git-credential-forwarder.sock"
+DC_GCF_CONTAINER_STATE_DIR="/mnt/git-credential-forwarder"
+DC_GCF_CONTAINER_SOCKET="$DC_GCF_CONTAINER_STATE_DIR/git-credential-forwarder.sock"
 
 _dc_gcf_server_addr() {
-  printf 'host.docker.internal:%s\n' "$DC_GCF_PORT"
+  printf '%s\n' "$DC_GCF_CONTAINER_SOCKET"
 }
 
 _dc_ensure_gcf_host() {
   mkdir -p "$DC_GCF_STATE_DIR"
 
-  if ! command -v npm >/dev/null 2>&1; then
-    echo "npm is required on the host to install git-credential-forwarder" >&2
+  if [[ ! -x "$DC_GCF_HOST_EXE" ]]; then
+    echo "Git credential socket forwarder executable not at $DC_GCF_HOST_EXE found or not executable: $DC_GCF_HOST_EXE" >&2
     return 1
   fi
 
-  if ! command -v gcf-server >/dev/null 2>&1 || ! command -v gcf-client >/dev/null 2>&1; then
-    echo "Installing git-credential-forwarder on host..."
-    npm install -g git-credential-forwarder || return 1
+  # If socket exists and server appears alive, we're done.
+  if [[ -S "$DC_GCF_SOCKET" ]]; then
+    if command -v fuser >/dev/null 2>&1 && fuser "$DC_GCF_SOCKET" >/dev/null 2>&1; then
+      return 0
+    fi
+
+    if command -v lsof >/dev/null 2>&1 && lsof "$DC_GCF_SOCKET" >/dev/null 2>&1; then
+      return 0
+    fi
+
+    rm -f "$DC_GCF_SOCKET"
   fi
 
-  if command -v lsof >/dev/null 2>&1 && lsof -nP -iTCP:"$DC_GCF_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
-    return 0
-  fi
-
-  echo "Starting gcf-server on host port $DC_GCF_PORT..."
-  nohup env GIT_CREDENTIAL_FORWARDER_PORT="$DC_GCF_PORT" \
-    gcf-server \
+  echo "Starting git credential socket forwarder at $DC_GCF_SOCKET..."
+  nohup "$DC_GCF_HOST_EXE" server --socket "$DC_GCF_SOCKET" \
     >"$DC_GCF_STATE_DIR/server.log" 2>&1 < /dev/null &
+
   echo $! > "$DC_GCF_STATE_DIR/server.pid"
 
   sleep 1
 
-  if command -v lsof >/dev/null 2>&1 && ! lsof -nP -iTCP:"$DC_GCF_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
-    echo "gcf-server did not start successfully; see $DC_GCF_STATE_DIR/server.log" >&2
+  if [[ ! -S "$DC_GCF_SOCKET" ]]; then
+    echo "Credential socket forwarder did not start; see $DC_GCF_STATE_DIR/server.log" >&2
     return 1
   fi
 }
@@ -168,41 +180,31 @@ _dc_bootstrap_gcf_container() {
     return 0
   fi
 
-  # Copy host gitconfig into a separate include file inside the container.
-  # This avoids clobbering container-specific settings.
   devcontainer exec --workspace-folder . bash -lc 'mkdir -p "$HOME"' || return 1
   devcontainer exec --workspace-folder . sh -lc 'cat > "$HOME/.gitconfig.host"' < "$host_gitconfig" || return 1
 
-  # Install client in container if needed, then wire config.
   devcontainer exec \
     --workspace-folder . \
-    --remote-env GIT_CREDENTIAL_FORWARDER_SERVER="$server_addr" \
-
+    --remote-env GIT_CREDENTIAL_FORWARDER_SOCKET="$server_addr" \
+    --remote-env DC_GCF_CONTAINER_EXE="$DC_GCF_CONTAINER_EXE" \
     bash -lc '
-  set -euo pipefail
+      set -euo pipefail
 
-  stamp="$HOME/.gcf-client-installed-v1"
+      if [[ ! -x "$DC_GCF_CONTAINER_EXE" ]]; then
+        echo "Credential forwarder client not mounted at $DC_GCF_CONTAINER_EXE" >&2
+        exit 1
+      fi
 
-  if ! command -v gcf-client >/dev/null 2>&1; then
-    if ! command -v npm >/dev/null 2>&1; then
-      echo "npm is required inside the container to install git-credential-forwarder" >&2
-      exit 1
-    fi
+      git config --file "$HOME/.gitconfig.host" --unset-all credential.helper || true
 
-    npm install -g git-credential-forwarder
-    touch "$stamp"
-  fi
+      if ! git config --global --get-all include.path | grep -Fx "$HOME/.gitconfig.host" >/dev/null 2>&1; then
+        git config --global --add include.path "$HOME/.gitconfig.host"
+      fi
 
-  git config --file "$HOME/.gitconfig.host" --unset-all credential.helper || true
-
-  if ! git config --global --get-all include.path | grep -Fx "$HOME/.gitconfig.host" >/dev/null 2>&1; then
-    git config --global --add include.path "$HOME/.gitconfig.host"
-  fi
-
-  git config --global --unset-all credential.helper || true
-  git config --global credential.helper "!f(){ gcf-client \"\$@\"; }; f"
-'
-
+      git config --global --unset-all credential.helper || true
+      git config --global credential.helper \
+        "!f(){ $DC_GCF_CONTAINER_EXE client \"\$@\" --socket \"\${GIT_CREDENTIAL_FORWARDER_SOCKET}\"; }; f"
+   '
 }
 
 dcexec() {
@@ -214,18 +216,24 @@ dcexec() {
 
   devcontainer exec \
     --workspace-folder . \
-    --remote-env GIT_CREDENTIAL_FORWARDER_SERVER="$server_addr" \
+    --remote-env GIT_CREDENTIAL_FORWARDER_SOCKET="$server_addr" \
     "$@"
 }
 
 dcup() {
-  devcontainer up --workspace-folder .
+  devcontainer up --workspace-folder . --remove-existing-container \
+  --mount "type=bind,source=$DC_GCF_STATE_DIR,target=$DC_GCF_CONTAINER_STATE_DIR" \
+  --mount "type=bind,source=$DC_GCF_HOST_EXE,target=$DC_GCF_CONTAINER_EXE" 
 }
 
 dcdot() {
   : "${DOTFILES_REPO_URL:?DOTFILES_REPO_URL is not set}"
+  local server_addr
+  server_addr="$(_dc_gcf_server_addr)"
 
-  devcontainer exec --workspace-folder . bash -lc '
+  devcontainer exec --workspace-folder . \
+    --remote-env GIT_CREDENTIAL_FOWARDER_SOCKET="$server_addr" \
+    bash -lc '
     set -e
 
     stamp="$HOME/.dotfiles-bootstrap-done"
@@ -259,13 +267,14 @@ dcshell() {
 
   _dc_ensure_gcf_host || return 1
   _dc_bootstrap_gcf_container || return 1
+  dcdot || return 1
 
   clear
   devcontainer exec \
     --workspace-folder . \
     --remote-env TERM=xterm-256color \
     --remote-env DEVCONTAINER_TAB_TITLE="$dc_name" \
-    --remote-env GIT_CREDENTIAL_FORWARDER_SERVER="$server_addr" \
+    --remote-env GIT_CREDENTIAL_FORWARDER_SOCKET="$server_addr" \
     zsh -l
 }
 

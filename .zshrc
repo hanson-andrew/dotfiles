@@ -113,6 +113,10 @@ fi
 export TMUX_DEFAULT_SHELL="$(command -v zsh)"
 # Ensure ~/.tmux.local.conf exists
 [ -f "$HOME/.tmux.local.conf" ] || touch "$HOME/.tmux.local.conf"
+# Auto-start tmux if not already inside one
+if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ]; then
+  exec tmux new-session -A -s main
+fi
 
 
 ### start devcontainer-cli-support ###

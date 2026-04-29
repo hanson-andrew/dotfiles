@@ -285,13 +285,27 @@ dcshell() {
     zsh -l
 }
 
-if [[ -n "$DEVCONTAINER_TAB_TITLE" ]]; then
-  function _dc_set_title() {
-    print -Pn "\e]0;${DEVCONTAINER_TAB_TITLE}\a"
-  }
-  precmd_functions+=(_dc_set_title)
-  _dc_set_title
-fi
+function _set_context_title() {
+  local context=""
+  local title=""
+
+  if [[ -n "$DEVCONTAINER_TAB_TITLE" ]]; then
+    context="dc"
+    title="$DEVCONTAINER_TAB_TITLE"
+  else
+    context="host"
+    title="${HOST:-$(hostname)}"
+  fi
+
+  if [[ -n "$TMUX" ]]; then
+    context="${context}+tmux"
+  fi
+
+  print -Pn "\e]0;[${context}] ${title}\a"
+}
+
+precmd_functions+=(_set_context_title)
+_set_context_title
 
 ## end devcontainer-cli-support ##
 

@@ -15,7 +15,6 @@ export DOTFILES_REPO_URL=https://github.com/hanson-andrew/dotfiles.git
 export PATH="$HOME/.devcontainers/bin:$PATH"
 export PATH="$PATH:/opt/nvim/"
 export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
 
 
 if [ -f "$HOME/.zshrc.local" ]; then
@@ -113,10 +112,6 @@ fi
 export TMUX_DEFAULT_SHELL="$(command -v zsh)"
 # Ensure ~/.tmux.local.conf exists
 [ -f "$HOME/.tmux.local.conf" ] || touch "$HOME/.tmux.local.conf"
-# Auto-start tmux if not already inside one
-if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ]; then
-  exec tmux new-session -A -s main
-fi
 
 
 ### start devcontainer-cli-support ###
@@ -228,7 +223,7 @@ dcexec() {
 }
 
 dcup() {
-  devcontainer up --workspace-folder . --remove-existing-container \
+  devcontainer up --workspace-folder . \
   --mount "type=bind,source=$DC_GCF_STATE_DIR,target=$DC_GCF_CONTAINER_STATE_DIR" \
   --mount "type=bind,source=$DC_GCF_HOST_EXE,target=$DC_GCF_CONTAINER_EXE" 
 }
@@ -295,10 +290,6 @@ function _set_context_title() {
   else
     context="host"
     title="${HOST:-$(hostname)}"
-  fi
-
-  if [[ -n "$TMUX" ]]; then
-    context="${context}+tmux"
   fi
 
   print -Pn "\e]0;[${context}] ${title}\a"

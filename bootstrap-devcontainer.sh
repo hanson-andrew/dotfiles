@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-apt-get update
-apt-get install -y tmux neovim
+sudo apt-get update
+sudo apt-get install -y tmux neovim
 

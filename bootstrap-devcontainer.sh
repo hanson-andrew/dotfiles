@@ -10,8 +10,10 @@ sudo apt install -y "${PACKAGES[@]}"
 
 curl -fsSL https://raw.githubusercontent.com/devcontainers/cli/main/scripts/install.sh | sh
 
-curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.appimage
-chmod u+x nvim-linux-x86_64.appimage
-sudo mkdir -p /opt/nvim
-sudo mv nvim-linux-x86_64.appimage /opt/nvim/nvim
+curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
+rm -rf /opt/nvim-linux-x86_64
+tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+rm nvim-linux-x86_64.tar.gz
+ln -sf /opt/nvim-linux-x86_:64/bin/nvim /opt/nvim/nvim
+
 

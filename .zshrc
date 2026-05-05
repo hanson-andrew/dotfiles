@@ -228,13 +228,45 @@ dcup() {
   --mount "type=bind,source=$DC_GCF_HOST_EXE,target=$DC_GCF_CONTAINER_EXE" 
 }
 
+_dc_devcontainer_id() {
+  docker ps -aq \
+    --filter "label=devcontainer.local_folder=$PWD" \
+    --format '{{.ID}}' \
+    | head -n 1
+}
+
+dcstop() {
+  local container_id
+  container_id="$(_dc_devcontainer_id)"
+
+  if [[ -z "$container_id" ]]; then
+    echo "No devcontainer found for workspace folder: $PWD" >&2
+    return 1
+  fi
+
+  docker stop "$container_id"
+}
+
+dcdown() {
+  local container_id
+  container_id="$(_dc_devcontainer_id)"
+
+  if [[ -z "$container_id" ]]; then
+    echo "No devcontainer found for workspace folder: $PWD" >&2
+    return 1
+  fi
+
+  docker stop "$container_id" >/dev/null 2>&1 || true
+  docker rm "$container_id"
+}
+
 dcdot() {
   : "${DOTFILES_REPO_URL:?DOTFILES_REPO_URL is not set}"
   local server_addr
   server_addr="$(_dc_gcf_server_addr)"
 
   devcontainer exec --workspace-folder . \
-    --remote-env GIT_CREDENTIAL_FOWARDER_SOCKET="$server_addr" \
+    --remote-env GIT_CREDENTIAL_FORWARDER_SOCKET="$server_addr" \
     bash -lc '
     set -e
 
@@ -248,6 +280,15 @@ dcdot() {
       rm -f "$HOME/.zshrc" "$HOME/.p10k.zsh" "$HOME/.vimrc"
 
       git --git-dir="$HOME/.dotfiles" --work-tree="$HOME" checkout -f
+
+      if [ -x "$HOME/bootstrap-devcontainer.sh" ]; then
+        "$HOME/bootstrap-devcontainer.sh"
+      elif [ -f "$HOME/bootstrap-devcontainer.sh" ]; then
+        sh "$HOME/bootstrap-devcontainer.sh"
+      else
+        echo "Expected $HOME/bootstrap-devcontainer.sh but it was not found" >&2
+        exit 1
+      fi
 
       if [ ! -d "$HOME/powerlevel10k" ]; then
         git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$HOME/powerlevel10k"

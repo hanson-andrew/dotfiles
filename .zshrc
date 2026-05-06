@@ -14,6 +14,7 @@ export EDITOR=nvim
 export DOTFILES_REPO_URL=https://github.com/hanson-andrew/dotfiles.git
 export PATH="$HOME/.devcontainers/bin:$PATH"
 export PATH="$PATH:/opt/nvim/"
+export PATH="$HOME/.local/bin:$PATH"
 export LANG=en_US.UTF-8
 
 
@@ -126,7 +127,7 @@ _dc_devcontainer_name() {
 # git-credential-domain-socket-forwarder
 # ----------------------------
 
-DC_GCF_HOST_EXE="/home/ahanson/src/repos/GitCredentialDomainSocketForwarder/Console/bin/Release/net10.0/linux-x64/native/Console"
+DC_GCF_HOST_EXE="dcgw"
 DC_GCF_CONTAINER_EXE="/usr/local/bin/git-credential-domain-socket-forwarder"
 DC_GCF_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/git-credential-domain-socket-forwarder"
 DC_GCF_SOCKET="$DC_GCF_STATE_DIR/git-credential-forwarder.sock"
@@ -274,6 +275,9 @@ dcdot() {
 
     if [ ! -d "$HOME/.dotfiles" ]; then
       git clone --bare "'"$DOTFILES_REPO_URL"'" "$HOME/.dotfiles"
+      git --git-dir="$HOME/.dotfiles" --work-tree="$HOME" config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+      git --git-dir="$HOME/.dotfiles" --work-tree="$HOME" fetch origin
+      git --git-dir="$HOME/.dotfiles" --work-tree="$HOME" branch --set-upstream-to=origin/main main
     fi
 
     if [ ! -f "$stamp" ]; then

@@ -138,6 +138,24 @@ _dc_gcf_server_addr() {
   printf '%s\n' "$DC_GCF_CONTAINER_SOCKET"
 }
 
+_dc_resolve_exe() {
+  local name_or_path="$1"
+  local resolved
+
+  resolved="$(command -v -- "$name_or_path")" || {
+    echo "Could not find executable: $name_or_path" >&2
+    return 1
+  }
+
+  # Optional but useful: turn symlinks/relative paths into an absolute path.
+  # macOS may not have GNU readlink -f, so prefer realpath if available.
+  if command -v realpath >/dev/null 2>&1; then
+    realpath "$resolved"
+  else
+    echo "$resolved"
+  fi
+}
+
 _dc_ensure_gcf_host() {
   mkdir -p "$DC_GCF_STATE_DIR"
 
@@ -224,9 +242,14 @@ dcexec() {
 }
 
 dcup() {
+  local host_exe="${DC_GCF_HOST_EXE:-dcgw}"
+  local host_exe_path
+
+  host_exe_path="$(_dc_resolve_exe "$host_exe")" || return 1
+
   devcontainer up --workspace-folder . \
-  --mount "type=bind,source=$DC_GCF_STATE_DIR,target=$DC_GCF_CONTAINER_STATE_DIR" \
-  --mount "type=bind,source=$DC_GCF_HOST_EXE,target=$DC_GCF_CONTAINER_EXE" 
+    --mount "type=bind,source=$DC_GCF_STATE_DIR,target=$DC_GCF_CONTAINER_STATE_DIR" \
+    --mount "type=bind,source=$host_exe_path,target=$DC_GCF_CONTAINER_EXE"
 }
 
 _dc_devcontainer_id() {

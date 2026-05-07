@@ -141,7 +141,7 @@ _dc_gcf_server_addr() {
 _dc_ensure_gcf_host() {
   mkdir -p "$DC_GCF_STATE_DIR"
 
-  if [[ ! -x "$DC_GCF_HOST_EXE" ]]; then
+  if ! command -v "$DC_GCF_HOST_EXE" >/dev/null 2>&1; then
     echo "Git credential socket forwarder executable not at $DC_GCF_HOST_EXE found or not executable: $DC_GCF_HOST_EXE" >&2
     return 1
   fi

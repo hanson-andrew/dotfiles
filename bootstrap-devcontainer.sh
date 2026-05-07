@@ -25,3 +25,5 @@ else
   git -C "$TPM_DIR" pull --ff-only
 fi
 
+"$TPM_DIR/bin/install_plugins"
+

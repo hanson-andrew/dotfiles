@@ -111,6 +111,8 @@ fi
 ###-end-npm-completion-###
 
 export TMUX_DEFAULT_SHELL="$(command -v zsh)"
+
+
 # Ensure ~/.tmux.local.conf exists
 [ -f "$HOME/.tmux.local.conf" ] || touch "$HOME/.tmux.local.conf"
 

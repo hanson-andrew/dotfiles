@@ -113,10 +113,6 @@ fi
 export TMUX_DEFAULT_SHELL="$(command -v zsh)"
 
 
-# Ensure ~/.tmux.local.conf exists
-[ -f "$HOME/.tmux.local.conf" ] || touch "$HOME/.tmux.local.conf"
-
-
 ### start devcontainer-cli-support ###
 
 _dc_devcontainer_name() {

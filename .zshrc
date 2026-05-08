@@ -310,12 +310,12 @@ dcdot() {
 
       git --git-dir="$HOME/.dotfiles" --work-tree="$HOME" checkout -f
 
-      if [ -x "$HOME/bootstrap-devcontainer.sh" ]; then
-        "$HOME/bootstrap-devcontainer.sh"
-      elif [ -f "$HOME/bootstrap-devcontainer.sh" ]; then
-        sh "$HOME/bootstrap-devcontainer.sh"
+      if [ -x "$HOME/.bootstrap/linux/bootstrap-devcontainer.sh" ]; then
+        "$HOME/.bootstrap/linux/bootstrap-devcontainer.sh"
+      elif [ -f "$HOME/.bootstrap/linux/bootstrap-devcontainer.sh" ]; then
+        sh "$HOME/.bootstrap/linux/bootstrap-devcontainer.sh"
       else
-        echo "Expected $HOME/bootstrap-devcontainer.sh but it was not found" >&2
+        echo "Expected $HOME/.bootstrap/linux/bootstrap-devcontainer.sh but it was not found" >&2
         exit 1
       fi
 
@@ -392,3 +392,11 @@ merge_claude_settings() {
 # Run it (optional: comment out if you only want it manually)
 merge_claude_settings
 
+
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	command yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd < "$tmp"
+	[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
+	command rm -f -- "$tmp"
+}

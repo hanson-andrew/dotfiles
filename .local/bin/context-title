@@ -1,7 +1,13 @@
 #!/usr/bin/env sh
+set -eu
 
-if [ -n "${DEVCONTAINER_TAB_TITLE:-}" ] || [ -f /.dockerenv ] || grep -qaE '/docker/|/kubepods/|/containerd/' /proc/1/cgroup 2>/dev/null; then
-  exit 1
+if [ -n "${DEVCONTAINER_TAB_TITLE:-}" ]; then
+  printf '[dc] %s\n' "$DEVCONTAINER_TAB_TITLE"
+elif [ -f /.dockerenv ] || grep -qaE '/docker/|/kubepods/|/containerd/' /proc/1/cgroup 2>/dev/null; then
+  # In a generic container but not a devcontainer.
+  name="$(hostname -s 2>/dev/null || hostname)"
+  printf '[container] %s\n' "$name"
+else
+  name="${HOST:-$(hostname -s 2>/dev/null || hostname)}"
+  printf '[host] %s\n' "$name"
 fi
-
-hostname -s 2>/dev/null || hostname

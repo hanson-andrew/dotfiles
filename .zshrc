@@ -336,18 +336,9 @@ dcshell() {
 }
 
 function _set_context_title() {
-  local context=""
-  local title=""
+  local context_title="$(~/.local/bin/context-title 2>/dev/null || hostname -s 2>/dev/null || hostname)"
 
-  if [[ -n "$DEVCONTAINER_TAB_TITLE" ]]; then
-    context="dc"
-    title="$DEVCONTAINER_TAB_TITLE"
-  else
-    context="host"
-    title="${HOST:-$(hostname)}"
-  fi
-
-  print -Pn "\e]0;[${context}] ${title}\a"
+  print -n -- $'\e]0;'"${context_title}"$'\a'
 }
 
 precmd_functions+=(_set_context_title)

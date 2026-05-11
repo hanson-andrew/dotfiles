@@ -2,8 +2,7 @@
 
 format = """
 [░▒▓](#a3aed2)\
-$container\
-$hostname\
+${custom.context_title}\
 [](bg:#769ff0 fg:#a3aed2)\
 $directory\
 [](fg:#769ff0 bg:#394260)\
@@ -76,4 +75,10 @@ format = '[[  $time ](fg:#a0a9cb bg:#1d2230)]($style)'
 disabled = false
 ssh_only = false
 format='[ $hostname ](bg:#a3aed2 fg:#090c0c)'
+
+[custom.context_title]
+command = 'context-title'
+when = 'true'
+style ='bg:#a3aed2 fg:#090c0c'
+format = '[ $output ]($style)'
 

@@ -295,12 +295,12 @@ dcdot() {
 
       git --git-dir="$HOME/.dotfiles" --work-tree="$HOME" checkout -f
 
-      if [ -x "$HOME/.bootstrap/linux/bootstrap-devcontainer.sh" ]; then
-        "$HOME/.bootstrap/linux/bootstrap-devcontainer.sh"
-      elif [ -f "$HOME/.bootstrap/linux/bootstrap-devcontainer.sh" ]; then
-        sh "$HOME/.bootstrap/linux/bootstrap-devcontainer.sh"
+      if [ -x "$HOME/.bootstrap/linux/bootstrap-ubuntu.sh" ]; then
+        "$HOME/.bootstrap/linux/bootstrap-ubuntu.sh"
+      elif [ -f "$HOME/.bootstrap/linux/bootstrap-ubuntu.sh" ]; then
+        sh "$HOME/.bootstrap/linux/bootstrap-ubuntu.sh"
       else
-        echo "Expected $HOME/.bootstrap/linux/bootstrap-devcontainer.sh but it was not found" >&2
+        echo "Expected $HOME/.bootstrap/linux/bootstrap-ubuntu.sh but it was not found" >&2
         exit 1
       fi
 

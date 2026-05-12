@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# tmux editor layout for the current directory:
+# - session named after current repo/directory
+# - one window named "edit"
+# - top pane runs nvim
+# - bottom pane is a normal shell
+
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+SESSION="$(basename "$ROOT")"
+WINDOW="edit"
+
+# Optional prefix so these don't collide with other project sessions.
+SESSION="edit-$SESSION"
+
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+  tmux attach-session -t "$SESSION"
+  exit 0
+fi
+
+tmux new-session -d -s "$SESSION" -n "$WINDOW" -c "$ROOT"
+
+# Top pane: editor
+tmux send-keys -t "$SESSION:$WINDOW.1" 'nvim .' C-m
+
+# Bottom pane: terminal
+tmux split-window -v -t "$SESSION:$WINDOW.1" -c "$ROOT"
+
+# Make the editor pane larger.
+tmux resize-pane -t "$SESSION:$WINDOW.1" -y 75%
+
+# Leave cursor in the terminal pane.
+tmux select-pane -t "$SESSION:$WINDOW.2"
+
+tmux attach-session -t "$SESSION"
+

@@ -12,6 +12,15 @@ fi
 git --git-dir="${DOTFILES_BARE_DIR}" --work-tree="${HOME}" checkout -f
 git --git-dir="${DOTFILES_BARE_DIR}" --work-tree="${HOME}" config --local status.showUntrackedFiles no
 
+if [ -x "$HOME/.bootstrap/linux/bootstrap-ubuntu.sh" ]; then
+  "$HOME/.bootstrap/linux/bootstrap-ubuntu.sh"
+elif [ -f "$HOME/.bootstrap/linux/bootstrap-ubuntu.sh" ]; then
+  sh "$HOME/.bootstrap/linux/bootstrap-ubuntu.sh"
+else
+  echo "Expected $HOME/.bootstrap/linux/bootstrap-ubuntu.sh but it was not found" >&2
+  exit 1
+fi
+
 if [ ! -d "${HOME}/powerlevel10k" ]; then
   git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${HOME}/powerlevel10k"
 fi

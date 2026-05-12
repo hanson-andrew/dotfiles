@@ -334,7 +334,7 @@ dcshell() {
       --remote-env TERM=xterm-256color \
       --remote-env DEVCONTAINER_TAB_TITLE="$dc_name" \
       --remote-env GIT_CREDENTIAL_FORWARDER_SOCKET="$server_addr" \
-      zsh -lc "$*; exec zsh -l"
+      zsh -lc "trap 'exec zsh -l' INT TERM; $cmd; exec zsh -l"
   else
     devcontainer exec \
       --workspace-folder . \

@@ -1,11 +1,10 @@
-
 #!/bin/bash
-
 
 PACKAGES=(
   tmux
   jq
   unzip
+  file
 )
 
 sudo apt update

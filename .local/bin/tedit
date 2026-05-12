@@ -31,6 +31,7 @@ tmux split-window -v -t "$SESSION:$WINDOW.1" -c "$ROOT"
 tmux resize-pane -t "$SESSION:$WINDOW.1" -y 75%
 
 # Leave cursor in the terminal pane.
+tmux send-keys -t "$SESSION:$WINDOW.2" "claude" C-m
 tmux select-pane -t "$SESSION:$WINDOW.2"
 
 tmux attach-session -t "$SESSION"

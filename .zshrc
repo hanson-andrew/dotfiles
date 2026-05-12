@@ -327,12 +327,22 @@ dcshell() {
   dcdot || return 1
 
   clear
-  devcontainer exec \
-    --workspace-folder . \
-    --remote-env TERM=xterm-256color \
-    --remote-env DEVCONTAINER_TAB_TITLE="$dc_name" \
-    --remote-env GIT_CREDENTIAL_FORWARDER_SOCKET="$server_addr" \
-    zsh -l
+
+  if [[ $# -gt 0 ]]; then
+    devcontainer exec \
+      --workspace-folder . \
+      --remote-env TERM=xterm-256color \
+      --remote-env DEVCONTAINER_TAB_TITLE="$dc_name" \
+      --remote-env GIT_CREDENTIAL_FORWARDER_SOCKET="$server_addr" \
+      zsh -lc "$*; exec zsh -l"
+  else
+    devcontainer exec \
+      --workspace-folder . \
+      --remote-env TERM=xterm-256color \
+      --remote-env DEVCONTAINER_TAB_TITLE="$dc_name" \
+      --remote-env GIT_CREDENTIAL_FORWARDER_SOCKET="$server_addr" \
+      zsh -l
+  fi
 }
 
 function _set_context_title() {

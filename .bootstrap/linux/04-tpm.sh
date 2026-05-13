@@ -1,10 +1,5 @@
 #/bin/bash
 
-mkdir -p ~/.config/tmux/themes
-curl -fsSL \
-  https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/tmux/tokyonight_moon.tmux \
-  -o ~/.config/tmux/themes/tokyonight_moon.tmux
-
 TPM_DIR="${HOME}/.tmux/plugins/tpm"
 
 if [ ! -d "$TPM_DIR/.git" ]; then

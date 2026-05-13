@@ -1,5 +1,5 @@
 #!/bin/bash
 
-dotfiles config user.name "Andrew.Hanson"
-dotfiles config user.email "hanson.andrew@gmail.com"
+git --git-dir=$HOME/.dotfiles --work-tree=$HOME config user.name "Andrew Hanson"
+git --git-dir=$HOME/.dotfiles --work-tree=$HOME config user.email "hanson.andrew@gmail.com"
 

@@ -243,6 +243,9 @@ dcshell() {
   clear
 
   if [[ $# -gt 0 ]]; then
+    local cmd
+    cmd="${(q-)@}"
+
     devcontainer exec \
       --workspace-folder . \
       --remote-env TERM=xterm-256color \

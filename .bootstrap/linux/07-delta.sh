@@ -60,6 +60,3 @@ fi
 echo "Installed:"
 delta --version
 
-git config --global include.path ~/.delta.gitconfig
-
-
